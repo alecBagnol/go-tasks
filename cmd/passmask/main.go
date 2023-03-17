@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,17 +8,21 @@ import (
 
 func main() {
 	// regex pattern for passwords up to 64 chars long - I took 8 as minimum length cuz it's usually the minimum length for passwords
-	regex_pattern := regexp.MustCompile(`[a-zA-Z0-9!@#\$\^%&*()\-=_\+\\\[\]\{\}|;:,.'"<>\?~` + "`" + `]{8,64}`)
-	// read from stdin
-	reader := bufio.NewReader(os.Stdin)
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	regex_pattern := regexp.MustCompile(`(?i)(?:key|pw|pass(?:word)?|secret)(?:=)([a-zA-Z0-9!@#\$\^%&*()\-=_\+\\\[\]\{\}|;:,.'"<>\?~/]{8,64})`)
+
+	content, _ := os.ReadFile("test.txt")
+	input := string(content)
+
+	matches := regex_pattern.FindAllStringSubmatchIndex(input, -1)
+	input_masked := input
+	offset := 0
+
+	for _, match := range matches {
+		fmt.Println(match)
+		start, end := match[2]+offset, match[3]+offset
+		input_masked = input_masked[:start] + "*****" + input_masked[end:]
+		offset += 5 - (end - start)
 	}
 
-	// replace pass with mask
-	masked := regex_pattern.ReplaceAllString(input, "*****")
-	// print
-	fmt.Println(masked)
+	fmt.Println(input_masked)
 }
